@@ -6,17 +6,17 @@ NapCat 插件索引仓库
 
 ### 插件信息字段说明
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `id` | string | ✅ | 插件唯一标识，建议格式：`napcat-plugin-xxx` |
-| `name` | string | ✅ | 插件显示名称 |
-| `version` | string | ✅ | 插件版本号，遵循 [SemVer](https://semver.org/) 规范 |
-| `description` | string | ✅ | 插件简短描述 |
-| `author` | string | ✅ | 作者名称 |
-| `homepage` | string | ✅ | 插件主页/仓库地址 |
-| `downloadUrl` | string | ✅ | 插件下载地址（zip 格式） |
-| `tags` | string[] | ✅ | 插件标签，用于分类 |
-| `minVersion` | string | ✅ | 支持的最低 NapCat 版本 |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | string | 插件唯一标识，建议格式：`napcat-plugin-xxx` |
+| `name` | string | 插件显示名称 |
+| `version` | string | 插件版本号，遵循 [SemVer](https://semver.org/) 规范 |
+| `description` | string | 插件简短描述 |
+| `author` | string | 作者名称 |
+| `homepage` | string | 插件主页/仓库地址 |
+| `downloadUrl` | string | 插件下载地址（zip 格式） |
+| `tags` | string[] | 插件标签，用于分类 |
+| `minVersion` | string | 支持的最低 NapCat 版本 |
 
 
 ### PR 提交要求
