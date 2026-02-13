@@ -13,24 +13,46 @@ jobs:
       pull-requests: write # 需要写权限来评论和合并 PR
 
     steps:
+      - name: Check PR state
+        id: pr_state
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+            const isOpen = pr.state === 'open';
+            core.setOutput('is_open', isOpen ? 'true' : 'false');
+            if (!isOpen) {
+              console.log(`PR is ${pr.state}; skipping remaining steps.`);
+            }
+
       - name: Checkout repository (Base)
         uses: actions/checkout@v4
+        if: steps.pr_state.outputs.is_open == 'true'
         with:
           ref: ${{ github.base_ref }}
           fetch-depth: 0
 
       - name: Checkout PR plugins.v4.json
+        if: steps.pr_state.outputs.is_open == 'true'
         run: |
           git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
           git checkout pr-${{ github.event.pull_request.number }} -- plugins.v4.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        if: steps.pr_state.outputs.is_open == 'true'
         with:
           node-version: '20'
 
       - name: Run Security Scan
         id: scan
+        if: steps.pr_state.outputs.is_open == 'true'
         run: node scripts/security-scan.mjs
         env:
           # 如果需要 GitHub Token 下载资源可以在这里传，目前脚本使用公开链接不需要
@@ -41,7 +63,7 @@ jobs:
 
       - name: Comment PR
         uses: actions/github-script@v7
-        if: github.event_name == 'pull_request_target' && failure() == false # 仅在成功时（或需要总是）尝试评论，如果无权限则此步可能失败但 scan 已完成
+        if: github.event_name == 'pull_request_target' && steps.pr_state.outputs.is_open == 'true' && failure() == false # 仅在成功时（或需要总是）尝试评论，如果无权限则此步可能失败但 scan 已完成
         continue-on-error: true # 如果因为来自 Fork 导致没权限评论，不要让 CI 挂掉
         with:
           script: |
@@ -63,7 +85,7 @@ jobs:
             }
 
       - name: Auto Merge
-        if: steps.scan.outputs.has_high_risks == 'false' && github.event_name == 'pull_request_target'
+        if: steps.pr_state.outputs.is_open == 'true' && steps.scan.outputs.has_high_risks == 'false' && github.event_name == 'pull_request_target'
         run: gh pr merge --auto --merge "${{ github.event.pull_request.html_url }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
